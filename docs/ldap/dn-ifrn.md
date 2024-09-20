@@ -61,3 +61,10 @@ Aqui, "20221148060005" é um identificador exclusivo, que pode corresponder a um
 ### Conclusão 
 
 O DN completo (CN=20221148060005,OU=Alunos,OU=DG-PAR,OU=RE,OU=IFRN,DC=ifrn,DC=local) define a posição de um aluno na árvore LDAP, organizando-o em uma hierarquia clara por meio de unidades organizacionais e componentes de domínio. Essa estrutura permite uma gestão eficiente e facilita a localização de informações dentro do contexto do IFRN.
+
+##  Explicação do DN em Manuscrito
+
+Você pode acessar a explicação completa do _Distinguished Name (DN)_ em formato PDF através do link abaixo:
+
+> [Clique aqui para baixar o PDF](./juranda2024.pdf)
+> (Explicação detalhada do DN em manuscrito)
