@@ -1,17 +1,207 @@
-# Instalação do SAMBA
+---
 
-Pontuação: [30 pontos] 
+# Instalação do Samba
 
-Documente a instalação do Samba no Alpine Linux
+## Introdução
+Guia de instalação e configuração do Samba como um controlador de domínio do Active Directory no Alpine Linux (domínio bahia.lab)
 
-Dica: 
 
-1. Use o [aplicativo ChatGPT do Celular](https://play.google.com/store/apps/details?id=com.openai.chatgpt&hl=pt_BR)
-2. Copie a resposta (Formato Markdown)
-3. Cole em uma conversa do WhatsApp com seu colega de grupo
-4. Abra o [WhatsApp Web](https://web.whatsapp.com/) em um PC/Notebook
-5. Copie o conteúdo da conversa, que deve estar no formato Markdown, e cole em sua documentação.
+## Requisitos
+- Alpine Linux.
 
-!!! note "Dica de *prompt* para o [ChatGPT](https://chatgpt.com)" 
+## Primeiro passo: Atualizar o Sistema
+Atualize os pacotes do Alpine:
 
-- Como instalar um servidor Samba como contraldor de domínio do ActiveDirectory. O sistema operacional é o Alpine Linux. O domínio "<estado>.lab".
+```bash
+apk update
+apk upgrade
+```
+
+## Segundo Passo: Instalando dependências
+Instale os pacotes do Samba, para configuração e gerenciamento de um servidor Samba:
+
+```bash
+apk add samba samba-client samba-tools samba-dc krb5 openrc
+```
+
+## Terceiro Passo: Configurar o Samba
+
+### 3.1 Modificar o Arquivo /etc/hosts
+Edite o arquivo /etc/hosts para incluir o hostname e o IP local:
+
+```bash
+micro /etc/hosts
+```
+
+Adicione as seguintes linhas:
+
+
+127.0.0.1 localhost.localdomain localhost
+10.1.1.10 bahia.lab bahia
+
+
+### 3.2 Criar o Arquivo de Configuração
+Crie um novo arquivo de configuração para o Samba:
+
+```bash
+micro /etc/samba/smb.conf
+```
+
+Adicione a seguinte configuração:
+
+```ini
+[global]
+   server role = domain controller
+   workgroup = bahia
+   realm = bahia.lab
+   netbios name = bahia
+   passdb backend = samba4
+   idmap_ldb:use rfc2307 = yes
+
+[netlogon]
+   path = /var/lib/samba/sysvol/bahia.lab/scripts
+   read only = No
+
+[sysvol]
+   path = /var/lib/samba/sysvol
+   read only = No
+```
+
+### 3.3 Criar o Banco de Dados do Samba
+Inicialize o banco de dados do Samba:
+
+```bash
+samba-tool domain provision --use-rfc2307 --realm=bahia.lab --domain=bahia --adminpass=SUA_SENHA
+```
+
+> *Nota:* Substitua SUA_SENHA por uma senha forte.
+
+## Quarto passo: Configurar o DNS
+
+### 4.1 Adicionar o Servidor DNS
+Edite o arquivo de configuração do DNS em /etc/samba/smb.conf:
+
+```bash
+micro /etc/samba/smb.conf
+```
+
+Adicione ou edite a linha:
+
+```ini
+dns forwarder = 8.8.8.8
+```
+
+### 4.2 Configuração do Kerberos
+Link o arquivo krb5.conf gerado pelo Samba:
+
+```bash
+ln -sf /var/lib/samba/private/krb5.conf /etc/krb5.conf
+```
+
+### 4.3 Iniciar o Samba e o DNS
+Ative os serviços do Samba:
+
+```bash
+rc-update add samba default
+rc-service samba start
+```
+
+markdown
+## Passo 5: Configurar o Firewall
+
+Se você estiver usando um firewall, certifique-se de permitir o tráfego para as portas do Samba. Abaixo está a configuração necessária:
+
+### Configuração de Portas
+
+```bash
+# TCP
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 88 -j ACCEPT
+iptables -A INPUT -p tcp --dport 135 -j ACCEPT
+iptables -A INPUT -p tcp --dport 139 -j ACCEPT
+iptables -A INPUT -p tcp --dport 445 -j ACCEPT
+
+# UDP
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --dport 88 -j ACCEPT
+iptables -A INPUT -p udp --dport 137 -j ACCEPT
+iptables -A INPUT -p udp --dport 138 -j ACCEPT
+```
+
+### Diagrama de Fluxo
+
+```plaintext
++---------------------------+
+|       Firewall            |
++---------------------------+
+          |
+          | Permitir Tráfego
+          v
++---------------------------+
+|      Permitir TCP         |
+|  Portas: 53, 88, 135,     |
+|         139, 445          |
++---------------------------+
+          |
+          | Permitir Tráfego
+          v
++---------------------------+
+|      Permitir UDP         |
+|  Portas: 53, 88, 137,     |
+|         138               |
++---------------------------+
+```
+
+## Passo 6: Verificar a Instalação
+Verifique se o Samba está funcionando corretamente:
+
+```bash
+samba-tool domain level show
+```
+
+## Passo 7: Adicionar Usuários
+Para adicionar usuários ao domínio, use o seguinte comando:
+
+```bash
+samba-tool user create SEU_USUARIO SUA_SENHA
+```
+
+> *Nota:* Substitua SEU_USUARIO e SUA_SENHA pelos valores desejados.
+
+---
+
+## Diagrama de Configuração do Samba
+
+```
+  +-------------------+
+  |   Alpine Linux    |
+  +-------------------+
+           |
+           |
+  +-------------------+
+  |   Samba AD DC     |
+  +-------------------+
+           |
+           |
+  +-------------------+
+  |  Active Directory |
+  +-------------------+
+```
+
+---
+
+## Tabela de Portas do Samba
+
+| Protocolo | Porta | Descrição                |
+| --------- | ----- | ------------------------ |
+| TCP       | 53    | DNS                      |
+| TCP       | 88    | Kerberos                 |
+| TCP       | 135   | RPC                      |
+| TCP       | 139   | NetBIOS Session Service  |
+| TCP       | 445   | SMB over TCP             |
+| UDP       | 53    | DNS                      |
+| UDP       | 88    | Kerberos                 |
+| UDP       | 137   | NetBIOS Name Service     |
+| UDP       | 138   | NetBIOS Datagram Service |
+
+---
