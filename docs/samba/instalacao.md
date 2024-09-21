@@ -3,7 +3,15 @@
 # Instalação do Samba
 
 ## Introdução
+
 Guia de instalação e configuração do Samba como um controlador de domínio do Active Directory no Alpine Linux (domínio bahia.lab)
+
+!!! note "Observações"
+
+    Vocês não configuraram o nome da máquina totalmente qualificado (FQDN) no arquivo `/etc/hosts`
+
+    Não existe o pacote `samba-tools`
+     
 
 
 ## Requisitos
@@ -19,6 +27,8 @@ apk upgrade
 
 ## Segundo Passo: Instalando dependências
 Instale os pacotes do Samba, para configuração e gerenciamento de um servidor Samba:
+
+
 
 ```bash
 apk add samba samba-client samba-tools samba-dc krb5 openrc

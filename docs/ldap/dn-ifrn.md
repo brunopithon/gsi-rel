@@ -1,6 +1,10 @@
 
 ## Compreensão do DN
 
+!!! note "Correção"
+
+    Seu trabalho manuscrito foi desconsiderado pois estava incompleto.
+
 O DN (Distinguished Name) é uma representação única que identifica uma entrada na árvore LDAP, e sua estrutura é composta por diferentes componentes que fornecem informações essenciais sobre a organização e a localização do objeto. A lista abaixo resume os principais componentes do DN, detalhando seu significado e descrição:
 
 - CN(Common Name) Nome comum ou identificador único do objeto (neste caso, a matrícula do aluno).
